@@ -34,6 +34,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults()).authorizeRequests()
                 .antMatchers("/api/v1/maps/**").permitAll()
+                .antMatchers("/api/v1/cabs/**").permitAll()
                 .and().formLogin().loginPage("/api/v1/login").loginProcessingUrl("/api/v1/login")
                 .successHandler((request, response, authentication) -> response.setStatus(200))
                 .failureHandler((request, response, authenticationException) -> response.setStatus(401))
@@ -49,7 +50,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("localhost:3000"));
+        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

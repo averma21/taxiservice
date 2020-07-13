@@ -3,7 +3,6 @@ package com.amrit.taxiservice.core;
 import com.amrit.taxiservice.model.Graph;
 import org.springframework.lang.NonNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,10 +44,10 @@ public class PathFinder {
                     break;
                 }
                 visited.add(v);
-                for (Graph.Connection connection : graph.getConnections(v)) {
-                    if (!visited.contains(connection.to)) {
-                        queue.add(connection.to);
-                        pathMap.put(connection.to, v);
+                for (Graph.Vertex to : graph.getConnectedVerticesFrom(v)) {
+                    if (!visited.contains(to)) {
+                        queue.add(to);
+                        pathMap.put(to, v);
                     }
                 }
             }

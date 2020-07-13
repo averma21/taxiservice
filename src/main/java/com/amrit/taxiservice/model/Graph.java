@@ -1,7 +1,9 @@
 package com.amrit.taxiservice.model;
 
+import com.amrit.taxiservice.EdgeExistsException;
 import org.springframework.lang.NonNull;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,6 +11,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * A graph to represent maps. A vertex is considered a point on ground and has a latitude and a longitude. An edge of this
+ * graph is considered a straight line. Hence there can be only one edge between two vertices. It could be bidirectional
+ * or unidirectional.
+ */
 public class Graph {
 
     public static class Vertex {
@@ -60,30 +67,6 @@ public class Graph {
         }
     }
 
-    public static class Connection {
-        public final Vertex to;
-        public final int cost;
-
-        public Connection(Vertex to) {
-            this.to = to;
-            this.cost = 0;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Connection that = (Connection) o;
-            return cost == that.cost &&
-                    Objects.equals(to, that.to);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(to, cost);
-        }
-    }
-
     public static class Edge {
         Vertex v1;
         Vertex v2;
@@ -132,11 +115,51 @@ public class Graph {
         }
     }
 
-    Map<Vertex, Set<Connection>> connections;
+    /**
+     * Class to help in queries like - what are the available edges <b>between</b> two vertices. Direction of edge doesn't
+     * matter.
+     */
+    private static class EdgeContainer {
+
+        private final Map<String, Edge> edgeMap;
+
+        private EdgeContainer() {
+            edgeMap = new HashMap<>();
+        }
+
+        private String getIDForMap(Vertex v1, Vertex v2) {
+            UUID v1Id = v1.getId();
+            UUID v2Id = v2.getId();
+            if (v1Id.compareTo(v2Id) <= 0) {
+                return v1Id.toString() + v2Id.toString();
+            }
+            return v2Id.toString() + v1Id.toString();
+        }
+
+        private synchronized void addEdge(Vertex v1, Vertex v2, int cost, boolean bidirectional) throws EdgeExistsException {
+            Edge edge = new Edge(v1, v2, cost, bidirectional);
+            Edge prev = edgeMap.putIfAbsent(getIDForMap(v1, v2), edge);
+            if (prev != null) {
+                throw new EdgeExistsException(v1, v2);
+            }
+        }
+
+        private Collection<Edge> getAllEdges() {
+            return edgeMap.values();
+        }
+
+        private boolean edgeExists(Vertex v1, Vertex v2) {
+            return edgeMap.containsKey(getIDForMap(v1, v2));
+        }
+    }
+
+    Map<Vertex, Set<Vertex>> connections;
+    EdgeContainer edgeContainer;
     UUID id;
 
     public Graph() {
         this.connections = new HashMap<>();
+        this.edgeContainer = new EdgeContainer();
         this.id = UUID.randomUUID();
     }
 
@@ -144,18 +167,24 @@ public class Graph {
         this.connections.putIfAbsent(vertex, new HashSet<>());
     }
 
-    public void addEdge(Vertex v1, Vertex v2, boolean bidirectional) {
-        addVertex(v1);
-        addVertex(v2);
-        this.connections.computeIfPresent(v1, (v, c) -> {
-            c.add(new Connection(v2));
-            return c;
-        });
-        if (bidirectional) {
-            this.connections.computeIfPresent(v2, (v, c) -> {
-                c.add(new Connection(v1));
-                return c;
+    public synchronized void addEdge(Vertex v1, Vertex v2, int cost, boolean bidirectional) throws EdgeExistsException {
+
+        if (!edgeContainer.edgeExists(v1, v2)) {
+            addVertex(v1);
+            addVertex(v2);
+            this.connections.computeIfPresent(v1, (v, sv) -> {
+                sv.add(v2);
+                return sv;
             });
+            if (bidirectional) {
+                this.connections.computeIfPresent(v2, (v, sv) -> {
+                    sv.add(v1);
+                    return sv;
+                });
+            }
+            edgeContainer.addEdge(v1, v2, cost, bidirectional);
+        } else {
+            System.out.println("Edge Already exists"); //todo use logger
         }
     }
 
@@ -167,20 +196,12 @@ public class Graph {
         return connections.keySet();
     }
 
-    public Set<Connection> getConnections(Vertex v) {
+    public Set<Vertex> getConnectedVerticesFrom(Vertex v) {
         return connections.get(v);
     }
 
-    public Set<Edge> getEdges() {
-        Set<Edge> edges = new HashSet<>();
-        for (Map.Entry<Vertex, Set<Connection>> entry : connections.entrySet()) {
-            Vertex from = entry.getKey();
-            for (Connection connection : entry.getValue()) {
-                Vertex to = connection.to;
-                edges.add(new Edge(from, to, connection.cost, getConnections(to).contains(new Connection(from))));
-            }
-        }
-        return edges;
+    public Collection<Edge> getEdges() {
+        return edgeContainer.getAllEdges();
     }
 
 }
