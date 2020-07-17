@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -194,6 +195,10 @@ public class Graph {
 
     public Set<Vertex> getVertices() {
         return connections.keySet();
+    }
+
+    public Optional<Vertex> getVertex(UUID vertexID) {
+        return connections.keySet().stream().filter(v -> v.getId().equals(vertexID)).findFirst();
     }
 
     public Set<Vertex> getConnectedVerticesFrom(Vertex v) {

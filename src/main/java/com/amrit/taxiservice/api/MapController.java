@@ -31,8 +31,8 @@ public class MapController {
     }
 
     @GetMapping(path = "{id}")
-    public List<Graph.Vertex> getPath(@PathVariable("id")  UUID graphID, @NotBlank @RequestParam("v1") Graph.Vertex v1,
-                                      @NotBlank @RequestParam("v2")  Graph.Vertex v2) {
+    public List<Graph.Vertex> getPath(@PathVariable("id")  UUID graphID, @NotBlank @RequestParam("v1") UUID v1,
+                                      @NotBlank @RequestParam("v2")  UUID v2) {
         return graphService.getPath(graphID, v1, v2);
     }
 

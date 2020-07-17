@@ -6,6 +6,7 @@ import com.amrit.taxiservice.model.Graph;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import java.util.UUID;
  */
 @Service
 public class GraphService {
+
+    private UUID latestGraphID;
 
     private static class GraphGenerator {
 
@@ -58,10 +61,22 @@ public class GraphService {
     public Graph getWholeNewGraph() {
         Graph g = generator.generate(-90, 90, -180, 180, 16, 15);
         graphMap.put(g.getId(), g);
+        latestGraphID = g.getId();
         return g;
     }
 
-    public List<Graph.Vertex> getPath(UUID graphId, Graph.Vertex v1, Graph.Vertex v2) {
-        return PathFinder.doBFS(graphMap.get(graphId), v1, v2);
+    public List<Graph.Vertex> getPath(UUID graphId, UUID fromVertex, UUID toVertex) {
+        Graph graph = graphMap.get(graphId == null ? latestGraphID : graphId);
+        Graph.Vertex v1 = graph.getVertex(fromVertex).orElse(null);
+        Graph.Vertex v2 = graph.getVertex(toVertex).orElse(null);
+        if (v1 == null) {
+            System.out.println("From vertex doesn't exist"); //todo log
+            return Collections.emptyList();
+        }
+        if (v2 == null) {
+            System.out.println("To vertex doesn't exist"); //todo log
+            return Collections.emptyList();
+        }
+        return PathFinder.doBFS(graph, v1, v2);
     }
 }
