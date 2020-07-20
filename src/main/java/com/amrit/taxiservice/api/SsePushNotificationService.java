@@ -14,8 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Service
 @EnableScheduling
@@ -46,10 +45,8 @@ public class SsePushNotificationService {
             return longitude;
         }
     }
-
-    final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-    private final BlockingQueue<Notification> notificationQueue = new LinkedBlockingDeque<>();
-    private final AtomicBoolean threadStarted = new AtomicBoolean(false);
+    
+    private final Map<String, BlockingQueue<Notification>> notificationQueues = new ConcurrentHashMap<>();
 
     @Autowired
     public SsePushNotificationService(TaxiServiceThreadFactory threadFactory) {
@@ -58,45 +55,43 @@ public class SsePushNotificationService {
 
     private final ExecutorService executorService;
 
-    public void addEmitter(final String regNo, final SseEmitter emitter) {
-        emitters.put(regNo, emitter);
-    }
-
-    public void removeEmitter(final String regNo) {
-        emitters.remove(regNo);
-    }
-
     public void addNotification(Notification notification) {
-        try {
-            notificationQueue.put(notification);
-        } catch (InterruptedException e) {
-            LOGGER.error("Could not send notification for vehicle {}", notification.regNo, e);
-        }
+        notificationQueues.putIfAbsent(notification.regNo, new LinkedBlockingQueue<>());
+        notificationQueues.computeIfPresent(notification.regNo, (reg, queue) -> {
+            try {
+                queue.put(notification);
+            } catch (InterruptedException e) {
+                LOGGER.error("Could not send notification for vehicle {}", notification.regNo, e);
+            }
+            return queue;
+        });
     }
 
-    public void doNotify() {
-        boolean success = threadStarted.compareAndSet(false, true);
-        if (success) {
-            executorService.submit(() -> {
-                try {
-                    while (true) {
-                        Notification notification = notificationQueue.take();
-                        LOGGER.debug("Got notification for cab {}", notification.regNo);
-                        try {
-                            SseEmitter emitter = emitters.get(notification.regNo);
-                            emitter.send(notification);
-                            emitter.complete();
-                        } catch (IOException e) {
-                            LOGGER.error("Could not send notification for cab {}", notification.regNo, e);
-                        } finally {
-                            emitters.remove(notification.regNo);
-                        }
-                    }
-                } catch (InterruptedException e) {
-                    LOGGER.error("Error receiving notification from queue", e);
+    public void doNotify(String regNo, SseEmitter emitter) {
+        executorService.submit(() -> {
+            try {
+                BlockingQueue<Notification> queue = notificationQueues.get(regNo);
+                if (queue == null) {
+                    LOGGER.error("No notification queue present for {}", regNo);
+                    return;
                 }
-            });
-        }
+                while (!queue.isEmpty()) {
+                    Notification notification = queue.take();
+                    LOGGER.debug("Got notification for cab {}", notification.regNo);
+                    try {
+                        emitter.send(notification);
+                    } catch (IOException e) {
+                        LOGGER.error("Could not send notification for cab {}", notification.regNo, e);
+                    }
+                }
+                LOGGER.debug("Sent all received notifications for {}", regNo);
+            } catch (InterruptedException e) {
+                LOGGER.error("Error receiving notification from queue", e);
+            } finally {
+                emitter.complete();
+            }
+        });
+
     }
 
 }

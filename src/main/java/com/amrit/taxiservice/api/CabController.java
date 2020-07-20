@@ -58,7 +58,6 @@ public class CabController {
         this.graphService = graphService;
         this.positionUpdateQueue = new LinkedBlockingDeque<>();
         this.executorService = Executors.newFixedThreadPool(1, threadFactory);
-        notificationService.doNotify();
         registerCabs();
         notifyUpdates();
     }
@@ -102,9 +101,7 @@ public class CabController {
         Cab cab = cabService.getCab(regNo);
         if (cab != null) {
             final SseEmitter emitter = new SseEmitter();
-            notificationService.addEmitter(cab.getRegistrationNo(), emitter);
-            emitter.onCompletion(() -> notificationService.removeEmitter(cab.getRegistrationNo()));
-            emitter.onTimeout(() -> notificationService.removeEmitter(cab.getRegistrationNo()));
+            notificationService.doNotify(cab.getRegistrationNo(), emitter);
             return new ResponseEntity<>(emitter, HttpStatus.OK);
         }
         return ResponseEntity.status(204).build();
