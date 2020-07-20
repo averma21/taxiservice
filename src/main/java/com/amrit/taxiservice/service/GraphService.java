@@ -3,6 +3,8 @@ package com.amrit.taxiservice.service;
 import com.amrit.taxiservice.EdgeExistsException;
 import com.amrit.taxiservice.core.PathFinder;
 import com.amrit.taxiservice.model.Graph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ import java.util.UUID;
  */
 @Service
 public class GraphService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphService.class.getName());
 
     private UUID latestGraphID;
 
@@ -59,7 +63,7 @@ public class GraphService {
     Map<UUID, Graph> graphMap = new HashMap<>();
 
     public Graph getWholeNewGraph() {
-        Graph g = generator.generate(-90, 90, -180, 180, 16, 15);
+        Graph g = generator.generate(-90, 90, -180, 180, 6, 6);
         graphMap.put(g.getId(), g);
         latestGraphID = g.getId();
         return g;
@@ -70,11 +74,11 @@ public class GraphService {
         Graph.Vertex v1 = graph.getVertex(fromVertex).orElse(null);
         Graph.Vertex v2 = graph.getVertex(toVertex).orElse(null);
         if (v1 == null) {
-            System.out.println("From vertex doesn't exist"); //todo log
+            LOGGER.error("From vertex doesn't exist"); //todo log
             return Collections.emptyList();
         }
         if (v2 == null) {
-            System.out.println("To vertex doesn't exist"); //todo log
+            LOGGER.error("To vertex doesn't exist"); //todo log
             return Collections.emptyList();
         }
         return PathFinder.doBFS(graph, v1, v2);

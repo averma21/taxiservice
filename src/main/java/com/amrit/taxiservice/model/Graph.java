@@ -1,6 +1,8 @@
 package com.amrit.taxiservice.model;
 
 import com.amrit.taxiservice.EdgeExistsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 
 import java.util.Collection;
@@ -18,6 +20,8 @@ import java.util.UUID;
  * or unidirectional.
  */
 public class Graph {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Graph.class.getName());
 
     public static class Vertex {
         UUID id;
@@ -185,7 +189,7 @@ public class Graph {
             }
             edgeContainer.addEdge(v1, v2, cost, bidirectional);
         } else {
-            System.out.println("Edge Already exists"); //todo use logger
+            LOGGER.info("Edge Already exists");
         }
     }
 

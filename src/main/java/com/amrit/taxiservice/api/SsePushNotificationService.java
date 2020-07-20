@@ -1,5 +1,9 @@
 package com.amrit.taxiservice.api;
 
+import com.amrit.taxiservice.TaxiServiceThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -16,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 @EnableScheduling
 public class SsePushNotificationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SsePushNotificationService.class.getName());
 
     public static class Notification {
         private final String regNo;
@@ -44,10 +50,16 @@ public class SsePushNotificationService {
     final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final BlockingQueue<Notification> notificationQueue = new LinkedBlockingDeque<>();
     private final AtomicBoolean threadStarted = new AtomicBoolean(false);
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    @Autowired
+    public SsePushNotificationService(TaxiServiceThreadFactory threadFactory) {
+        this.executorService = Executors.newSingleThreadExecutor(threadFactory);
+    }
+
+    private final ExecutorService executorService;
 
     public void addEmitter(final String regNo, final SseEmitter emitter) {
-        emitters.putIfAbsent(regNo, emitter);
+        emitters.put(regNo, emitter);
     }
 
     public void removeEmitter(final String regNo) {
@@ -58,7 +70,7 @@ public class SsePushNotificationService {
         try {
             notificationQueue.put(notification);
         } catch (InterruptedException e) {
-            e.printStackTrace(); // todo use logger
+            LOGGER.error("Could not send notification for vehicle {}", notification.regNo, e);
         }
     }
 
@@ -69,20 +81,19 @@ public class SsePushNotificationService {
                 try {
                     while (true) {
                         Notification notification = notificationQueue.take();
-                        System.out.println("Got notification " + notification);
+                        LOGGER.debug("Got notification for cab {}", notification.regNo);
                         try {
-                            emitters.get(notification.regNo).send(notification);
+                            SseEmitter emitter = emitters.get(notification.regNo);
+                            emitter.send(notification);
+                            emitter.complete();
                         } catch (IOException e) {
+                            LOGGER.error("Could not send notification for cab {}", notification.regNo, e);
+                        } finally {
                             emitters.remove(notification.regNo);
-                        }
-                        if (emitters.size() == 0) {
-                            threadStarted.set(false);
-                            break;
                         }
                     }
                 } catch (InterruptedException e) {
-                    //todo log
-                    e.printStackTrace();
+                    LOGGER.error("Error receiving notification from queue", e);
                 }
             });
         }

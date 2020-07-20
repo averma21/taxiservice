@@ -1,34 +1,37 @@
 package com.amrit.taxiservice.service.messaging;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import com.amrit.taxiserviceapi.messaging.MessageRecord;
+import com.amrit.taxiserviceapi.messaging.MessagingService;
 import org.springframework.stereotype.Service;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Properties;
+import java.util.Queue;
 
 @Service
-public class MessagingGateway implements Closeable {
-
-    Producer<String, byte[]> producer;
+public class MessagingGateway {
+    
+    private final MessagingService messagingService;
 
     public MessagingGateway() {
         Properties props = new Properties();
         props.put("bootstrap.servers", "localhost:9092");
         props.put("acks", "all");
+        props.setProperty("group.id", this.getClass().getName());
+        props.setProperty("enable.auto.commit", "true");
+        props.setProperty("auto.commit.interval.ms", "1000");
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-        producer = new KafkaProducer<>(props);
+        props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
+        this.messagingService = new MessagingService(props);
     }
 
     public void sendMessage(String topic, String key, byte[] value) {
-        producer.send(new ProducerRecord<String, byte[]>(topic, key, value));
+        messagingService.sendMessage(topic, key, value);
     }
 
-    @Override
-    public void close() throws IOException {
-        producer.close();
+    public void subscribe(String topic, Queue<MessageRecord> queue) {
+        messagingService.subscribe(topic, queue);
     }
+
 }
