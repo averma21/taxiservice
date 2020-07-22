@@ -1,11 +1,14 @@
 package com.amrit.taxiservice.model;
 
+import com.amrit.taxiserviceapi.messaging.Duty;
+
 public class Cab {
 
     double latitude;
     double longitude;
     String registrationNo;
     boolean isBooked;
+    Duty duty;
 
     public Cab(String registrationNo) {
         this.registrationNo = registrationNo;
@@ -38,5 +41,9 @@ public class Cab {
 
     public void setBooked(boolean booked) {
         isBooked = booked;
+    }
+
+    public void assignDuty(Duty duty) {
+        this.duty = duty;
     }
 }

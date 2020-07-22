@@ -26,11 +26,13 @@ public class SsePushNotificationService {
         private final String regNo;
         private final double latitude;
         private final double longitude;
+        private final boolean tripended;
 
-        public Notification(String regNo, double latitude, double longitude) {
+        public Notification(String regNo, double latitude, double longitude, boolean tripended) {
             this.regNo = regNo;
             this.latitude = latitude;
             this.longitude = longitude;
+            this.tripended = tripended;
         }
 
         public String getRegNo() {
@@ -43,6 +45,10 @@ public class SsePushNotificationService {
 
         public double getLongitude() {
             return longitude;
+        }
+
+        public boolean isTripended() {
+            return tripended;
         }
     }
     
