@@ -96,7 +96,7 @@ public class CabController {
                         if (deserialize(messageRecord.getValue()).equals(Constants.TRIP_ENDED_NOTIFICATION_KEY)) {
                             LOGGER.info("Trip ended");
                             notificationService.addNotification(new SsePushNotificationService.Notification(messageRecord.getKey(), 0, 0, true));
-                            break;
+                            continue;
                         } else {
                             LOGGER.error("Could not receive position update ", e);
                             throw e;
@@ -106,8 +106,8 @@ public class CabController {
                     cabService.updatePos(messageRecord.getKey(), position.getLatitude(), position.getLongitude());
                     notificationService.addNotification(new SsePushNotificationService.Notification(messageRecord.getKey(), position.getLatitude(), position.getLongitude(), false));
                 }
-            } catch (InterruptedException e) {
-               LOGGER.error("Interrupted ", e);
+            } catch (Exception e) {
+               LOGGER.error("Caught exception ", e);
             }
         });
     }

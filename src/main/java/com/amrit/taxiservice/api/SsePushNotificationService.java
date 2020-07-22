@@ -91,7 +91,7 @@ public class SsePushNotificationService {
                     }
                 }
                 LOGGER.debug("Sent all received notifications for {}", regNo);
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 LOGGER.error("Error receiving notification from queue", e);
             } finally {
                 emitter.complete();
