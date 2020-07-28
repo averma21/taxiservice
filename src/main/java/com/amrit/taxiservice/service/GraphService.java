@@ -3,10 +3,18 @@ package com.amrit.taxiservice.service;
 import com.amrit.taxiservice.EdgeExistsException;
 import com.amrit.taxiservice.core.PathFinder;
 import com.amrit.taxiservice.model.Graph;
+import com.amrit.taxiservice.model.Place;
+import com.amrit.taxiservice.persistence.PlaceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,6 +30,13 @@ import java.util.UUID;
 public class GraphService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphService.class.getName());
+
+    private final PlaceRepository placeRepository;
+
+    @Autowired
+    public GraphService(PlaceRepository placeRepository) {
+        this.placeRepository = placeRepository;
+    }
 
     private UUID latestGraphID;
 
@@ -82,5 +97,13 @@ public class GraphService {
             return Collections.emptyList();
         }
         return PathFinder.doBFS(graph, v1, v2);
+    }
+
+    public void addPlace(Place place) {
+        placeRepository.save(place);
+    }
+
+    public Page<Place> getAllPlacesAround(long latitude, long longitude, int page, int size) {
+        return placeRepository.findByLatitudeAndLongitude(latitude, longitude, PageRequest.of(page, size));
     }
 }

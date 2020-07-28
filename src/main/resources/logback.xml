@@ -20,12 +20,17 @@
         </encoder>
     </appender>
 
-<!--    <root level="INFO">-->
-<!--        <appender-ref ref="FILE" level=""/>-->
-<!--        <appender-ref ref="STDOUT"/>-->
-<!--    </root>-->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
 
     <logger name="com.amrit.taxiservice" level="DEBUG">
+        <appender-ref ref="taxiservice"/>
+    </logger>
+    <logger name="org.springframework" level="DEBUG">
+        <appender-ref ref="taxiservice"/>
+    </logger>
+    <logger name="org.neo4j" level="DEBUG">
         <appender-ref ref="taxiservice"/>
     </logger>
     <logger name="com.amrit.taxiserviceapi" level="DEBUG">
