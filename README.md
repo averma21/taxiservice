@@ -9,3 +9,8 @@ another taxi service.
 
 Any driver who wants to go on a vacation could unregister from taxi service for a while but still
 would be a part of Cab Emulator.
+
+## APIs
+
+### Add Vertex sample request -
+```curl -XPOST localhost:8080/api/v1/maps --data '{"name":"My Place", "latitude":48.235345,"longitude":121.845972,"description":"Second Place","_csrf":"xxxx"}' -H "Content-Type:application/json" -v --cookie "XSRF-TOKEN=xxxx" -H "X-XSRF-TOKEN: xxxx"```

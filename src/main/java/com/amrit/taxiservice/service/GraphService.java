@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -103,7 +104,21 @@ public class GraphService {
         placeRepository.save(place);
     }
 
-    public Page<Place> getAllPlacesAround(long latitude, long longitude, int page, int size) {
-        return placeRepository.findByLatitudeAndLongitude(latitude, longitude, PageRequest.of(page, size));
+    public void connect(double flat, double flon, double tolat, double tolon, boolean bidirectional) {
+        Place from = placeRepository.findByLatitudeAndLongitude(flat, flon);
+        Place to = placeRepository.findByLatitudeAndLongitude(tolat, tolon);
+
+        if (from != null && to != null) {
+            if (bidirectional) {
+                from.connectionBiDirectional(to);
+            } else {
+                from.connectUniDirectionallyTo(to);
+            }
+            placeRepository.save(from);
+        }
     }
+
+//    public Page<Place> getAllPlacesAround(long latitude, long longitude, int page, int size) {
+//        return placeRepository.findByLatitudeAndLongitude(latitude, longitude, PageRequest.of(page, size));
+//    }
 }

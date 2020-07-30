@@ -52,8 +52,8 @@ public class MapController {
 
     /**
      * Sample Request -
-     * curl -XPOST localhost:8080/api/v1/mapNEW","latitude":48.235345,"longitude":121.845972,"description":"Second Place","_csrf":"fab909b3-3ab3-4e87-bf9d-01bacd74cfdc"}' \
-     * -H "Content-Type:application/json" -v --cookie "XSRF-TOKEN=fab909b3-3ab3-4e87-bf9d-01bacd74cfdc" -H "X-XSRF-TOKEN: fab909b3-3ab3-4e87-bf9d-01bacd74cfdc"
+     * curl -XPOST localhost:8080/api/v1/maps --data '{"name":"My Place", "latitude":48.235345,"longitude":121.845972,"description":"Second Place","_csrf":"xxxx"}' \
+     * -H "Content-Type:application/json" -v --cookie "XSRF-TOKEN=xxxx" -H "X-XSRF-TOKEN: xxxx"
      * @param place place to add
      */
     @PostMapping
@@ -61,10 +61,20 @@ public class MapController {
         graphService.addPlace(place);
     }
 
-    @GetMapping(path = "/find")
-    public Page<Place> getAllPlacesNear( @RequestParam("latitude")  long latitude,  @RequestParam("longitude")  long longitude) {
-        return graphService.getAllPlacesAround(latitude, longitude, 1, 10);
+    /**
+     * Sample Request -
+     * curl -XPOST localhost:8080/api/v1/maps/connect --cookie "XSRF-TOKEN=$token" -H "X-XSRF-TOKEN: $token" -d 'flat=48.235345&flon=121.845972&tolat=48.234165&tolon=120.870972&bi=true'
+     */
+    @PostMapping(path = "/connect")
+    public void connect( @RequestParam("flat")  double flat,  @RequestParam("flon")  double flon, @RequestParam("tolat")
+            double tolat, @RequestParam("tolon") double tolon, @RequestParam("bi") boolean bi) {
+        graphService.connect(flat, flon, tolat, tolon, bi);
     }
+
+//    @GetMapping(path = "/find")
+//    public Page<Place> getAllPlacesNear( @RequestParam("latitude")  long latitude,  @RequestParam("longitude")  long longitude) {
+//        return graphService.getAllPlacesAround(latitude, longitude, 1, 10);
+//    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)

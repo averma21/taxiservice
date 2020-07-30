@@ -6,6 +6,7 @@ import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.neo4j.ogm.annotation.Relationship.UNDIRECTED;
@@ -30,10 +31,10 @@ public class Place {
 //    }
 
     @Relationship(type = "connection", direction = UNDIRECTED)
-    Set<Place> biDirectionalConnections;
+    Set<Place> biDirectionalConnections = new HashSet<>();
 
     @Relationship(type = "connection")
-    Set<Place> to;
+    Set<Place> outgoingConnections = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -53,5 +54,13 @@ public class Place {
 
     public String getDescription() {
         return description;
+    }
+
+    public void connectionBiDirectional(Place to) {
+        biDirectionalConnections.add(to);
+    }
+
+    public void connectUniDirectionallyTo(Place to) {
+        outgoingConnections.add(to);
     }
 }

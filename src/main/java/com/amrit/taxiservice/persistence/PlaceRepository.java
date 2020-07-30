@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PlaceRepository extends Neo4jRepository<Place, Long> {
 
-    Page<Place> findByLatitudeAndLongitude(long latitude, long longitude, Pageable pageable);
+    Place findByLatitudeAndLongitude(double latitude, double longitude);
 
     Place findById(long id);
 
